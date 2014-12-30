@@ -263,16 +263,16 @@ func compareDirectories(dirs ...string) error {
 	}
 }
 
-func directoryContents(dir string) []fileInfo {
+func directoryContents(dir string) ([]fileInfo, error) {
 	res := make(chan fileInfo)
-	startWalker(dir, res, nil)
+	errc := startWalker(dir, res, nil)
 
 	var files []fileInfo
 	for f := range res {
 		files = append(files, f)
 	}
 
-	return files
+	return files, <-errc
 }
 
 func mergeDirectoryContents(c ...[]fileInfo) []fileInfo {
