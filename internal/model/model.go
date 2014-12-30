@@ -80,7 +80,7 @@ type service interface {
 	Serve()
 	Stop()
 	Jobs() ([]string, []string) // In progress, Queued
-	Bump(string)
+	BringToFront(string)
 }
 
 type Model struct {
@@ -1390,13 +1390,13 @@ func (m *Model) availability(folder, file string) []protocol.DeviceID {
 }
 
 // Bump the given files priority in the job queue
-func (m *Model) Bump(folder, file string) {
+func (m *Model) BringToFront(folder, file string) {
 	m.pmut.RLock()
 	defer m.pmut.RUnlock()
 
 	runner, ok := m.folderRunners[folder]
 	if ok {
-		runner.Bump(file)
+		runner.BringToFront(file)
 	}
 }
 

@@ -22,7 +22,7 @@ import (
 
 func TestJobQueue(t *testing.T) {
 	// Some random actions
-	q := NewJobQueue()
+	var q jobQueue
 	q.Push("f1")
 	q.Push("f2")
 	q.Push("f3")
@@ -40,6 +40,8 @@ func TestJobQueue(t *testing.T) {
 		}
 		progress, queued = q.Jobs()
 		if len(progress) != 1 || len(queued) != 3 {
+			t.Log(progress)
+			t.Log(queued)
 			t.Fatal("Wrong length")
 		}
 
@@ -74,7 +76,7 @@ func TestJobQueue(t *testing.T) {
 
 		s := fmt.Sprintf("f%d", i)
 
-		q.Bump(s)
+		q.BringToFront(s)
 		progress, queued = q.Jobs()
 		if len(progress) != 4-i || len(queued) != i {
 			t.Fatal("Wrong length")
@@ -116,7 +118,7 @@ func TestJobQueue(t *testing.T) {
 	if len(progress) != 0 || len(queued) != 0 {
 		t.Fatal("Wrong length")
 	}
-	q.Bump("")
+	q.BringToFront("")
 	q.Done("f5") // Does not exist
 	progress, queued = q.Jobs()
 	if len(progress) != 0 || len(queued) != 0 {
@@ -124,59 +126,17 @@ func TestJobQueue(t *testing.T) {
 	}
 }
 
-/*
-func BenchmarkJobQueuePush(b *testing.B) {
-	files := genFiles(b.N)
-
-	q := NewJobQueue()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		q.Push(&files[i])
-	}
-}
-
-func BenchmarkJobQueuePop(b *testing.B) {
-	files := genFiles(b.N)
-
-	q := NewJobQueue()
-	for j := range files {
-		q.Push(&files[j])
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		q.Pop()
-	}
-}
-
-func BenchmarkJobQueuePopDone(b *testing.B) {
-	files := genFiles(b.N)
-
-	q := NewJobQueue()
-	for j := range files {
-		q.Push(&files[j])
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		n := q.Pop()
-		q.Done(n)
-	}
-}
-*/
-
 func BenchmarkJobQueueBump(b *testing.B) {
 	files := genFiles(b.N)
 
-	q := NewJobQueue()
+	var q jobQueue
 	for _, f := range files {
 		q.Push(f.Name)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		q.Bump(files[i].Name)
+		q.BringToFront(files[i].Name)
 	}
 }
 
@@ -185,7 +145,7 @@ func BenchmarkJobQueuePushPopDone10k(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		q := NewJobQueue()
+		var q jobQueue
 		for _, f := range files {
 			q.Push(f.Name)
 		}
